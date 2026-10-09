@@ -4,14 +4,963 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#14532d" />
+    <title>Clean Loop</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%2314532d'/%3E%3Cpath d='M9 17a7 7 0 0 1 12-5l2-2v6h-6l2.2-2.2A4 4 0 0 0 12 17' fill='none' stroke='%23bef264' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-    <title>Clean Loop</title>
+    <style>
+:root {
+  --ink: #12261b;
+  --ink-2: #4a5a50;
+  --ink-3: #7c8a81;
+  --forest: #14532d;
+  --forest-2: #0e3d21;
+  --leaf: #1f9d55;
+  --lime: #bef264;
+  --paper: #f5f4ee;
+  --card: #ffffff;
+  --line: #e5e3d8;
+  --line-2: #efeee6;
+  --danger: #b42318;
+  --danger-bg: #fdecea;
+  --warn: #9a6700;
+  --warn-bg: #fff4d6;
+  --info: #175cd3;
+  --info-bg: #e6efff;
+  --ok: #15693a;
+  --ok-bg: #dcf5e4;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(18, 38, 27, 0.05), 0 6px 18px rgba(18, 38, 27, 0.05);
+  --font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Fraunces", Georgia, serif;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: var(--display); font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+h1 { font-size: 30px; line-height: 1.15; }
+h2 { font-size: 21px; }
+h3 { font-size: 17px; }
+p { margin: 0; }
+a { color: var(--forest); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+
+/* ---------- layout ---------- */
+.shell { display: grid; grid-template-columns: 252px 1fr; min-height: 100%; }
+.sidebar {
+  background: var(--forest-2);
+  color: #e6efe9;
+  padding: 22px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 18px; font-family: var(--display); font-size: 21px; font-weight: 600; color: #fff; }
+.brand-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--lime); color: var(--forest-2); display: grid; place-items: center; }
+.nav-label { font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: #8fb09c; padding: 14px 12px 6px; }
+.nav a {
+  display: flex; align-items: center; gap: 11px; padding: 9px 12px; border-radius: 10px;
+  color: #cfe0d5; font-weight: 500; text-decoration: none;
+}
+.nav a:hover { background: rgba(255, 255, 255, 0.07); }
+.nav a.active { background: var(--lime); color: var(--forest-2); }
+.sidebar-foot { margin-top: auto; padding: 12px; border-top: 1px solid rgba(255, 255, 255, 0.12); display: flex; align-items: center; gap: 10px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: #2b6b46; color: #fff; display: grid; place-items: center; font-weight: 600; flex: none; }
+.who { min-width: 0; flex: 1; }
+.who b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+.who span { font-size: 12px; color: #9fbfab; }
+.icon-btn { background: transparent; border: 0; color: #cfe0d5; padding: 6px; border-radius: 8px; cursor: pointer; display: grid; place-items: center; }
+.icon-btn:hover { background: rgba(255, 255, 255, 0.1); }
+
+.main { padding: 32px 40px 64px; max-width: 1180px; width: 100%; min-width: 0; }
+.topbar-m { display: none; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.page-head p { color: var(--ink-2); margin-top: 6px; max-width: 60ch; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .sidebar {
+    position: fixed; z-index: 40; inset: 0 auto 0 0; width: 272px; transform: translateX(-102%);
+    transition: transform 0.2s ease; height: 100%;
+  }
+  .sidebar.open { transform: none; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.4); }
+  .topbar-m {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--forest-2); color: #fff;
+    position: sticky; top: 0; z-index: 30; font-family: var(--display); font-size: 18px; font-weight: 600;
+  }
+  .main { padding: 22px 16px 56px; }
+  h1 { font-size: 25px; }
+}
+
+/* ---------- surfaces ---------- */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+.card.flat { box-shadow: none; }
+.card-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.grid { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.split { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+@media (max-width: 980px) { .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .split { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .g2, .g3, .g4 { grid-template-columns: 1fr; } }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.muted { color: var(--ink-2); }
+.faint { color: var(--ink-3); font-size: 13px; }
+.sm { font-size: 13px; }
+
+/* ---------- stat tiles ---------- */
+.stat { padding: 18px 20px; }
+.stat .label { font-size: 13px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+.stat .num { font-family: var(--display); font-size: 36px; font-weight: 600; line-height: 1.1; margin-top: 8px; font-variant-numeric: tabular-nums; }
+.stat .sub { font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
+.stat.hero { background: var(--forest); color: #fff; border-color: var(--forest); }
+.stat.hero .label, .stat.hero .sub { color: #b9d6c5; }
+.delta-up { color: var(--danger); } .delta-down { color: var(--ok); }
+
+/* ---------- forms ---------- */
+label.field { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; font-size: 13.5px; font-weight: 500; align-content: flex-start; }
+label.field > .hint { font-weight: 400; color: var(--ink-3); font-size: 12.5px; }
+label.field > .input { flex: 1 0 100%; }
+.input, select.input, textarea.input {
+  width: 100%; padding: 10px 12px; border: 1px solid #d3d1c4; border-radius: 10px; background: #fff; font-weight: 400;
+}
+textarea.input { min-height: 104px; resize: vertical; }
+.input:focus { outline: 2px solid var(--leaf); outline-offset: 0; border-color: var(--leaf); }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+.check input { width: 16px; height: 16px; accent-color: var(--forest); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid transparent;
+  background: var(--forest); color: #fff; padding: 10px 16px; border-radius: 10px; font-weight: 600; cursor: pointer;
+  text-decoration: none; white-space: nowrap;
+}
+.btn:hover { background: var(--forest-2); text-decoration: none; }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn.lime { background: var(--lime); color: var(--forest-2); }
+.btn.lime:hover { background: #a9e04a; }
+.btn.ghost { background: #fff; color: var(--ink); border-color: #d3d1c4; }
+.btn.ghost:hover { background: #f1f0e8; }
+.btn.danger { background: var(--danger); }
+.btn.sm { padding: 6px 11px; font-size: 13px; border-radius: 8px; }
+.btn.block { width: 100%; }
+
+/* ---------- badges ---------- */
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.badge i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.b-pending { background: var(--warn-bg); color: var(--warn); }
+.b-acknowledged { background: var(--info-bg); color: var(--info); }
+.b-in_progress { background: #eee9ff; color: #5b3fc4; }
+.b-resolved { background: var(--ok-bg); color: var(--ok); }
+.b-closed { background: #ececE4; color: #555f58; }
+.b-rejected { background: var(--danger-bg); color: var(--danger); }
+.p-low { background: #ececE4; color: #555f58; }
+.p-medium { background: var(--info-bg); color: var(--info); }
+.p-high { background: var(--warn-bg); color: var(--warn); }
+.p-urgent { background: var(--danger-bg); color: var(--danger); }
+.tag { display: inline-flex; padding: 2px 9px; border-radius: 8px; background: var(--line-2); color: var(--ink-2); font-size: 12.5px; }
+.verified { color: var(--ok); display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; }
+
+/* ---------- lists / tables ---------- */
+.list { display: flex; flex-direction: column; }
+.item { display: flex; gap: 14px; padding: 14px 4px; border-bottom: 1px solid var(--line-2); align-items: flex-start; color: inherit; }
+.item:last-child { border-bottom: 0; }
+a.item:hover { background: #faf9f4; text-decoration: none; }
+.item .grow { flex: 1; min-width: 0; }
+.item .title { font-weight: 600; }
+.clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.table-wrap { overflow-x: auto; }
+table.t { width: 100%; border-collapse: collapse; font-size: 14px; }
+.t th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 600; }
+.t td { padding: 12px; border-bottom: 1px solid var(--line-2); vertical-align: middle; }
+.t tr.click { cursor: pointer; }
+.t tr.click:hover td { background: #faf9f4; }
+
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { border: 1px solid #d3d1c4; background: #fff; border-radius: 999px; padding: 6px 13px; font-size: 13.5px; cursor: pointer; font-weight: 500; }
+.chip:hover { background: #f1f0e8; }
+.chip.on { background: var(--forest); color: #fff; border-color: var(--forest); }
+
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; color: var(--ink-2); font-size: 13.5px; }
+
+/* ---------- misc ---------- */
+.notice { padding: 11px 14px; border-radius: 10px; font-size: 14px; display: flex; gap: 10px; align-items: flex-start; }
+.notice.err { background: var(--danger-bg); color: var(--danger); }
+.notice.ok { background: var(--ok-bg); color: var(--ok); }
+.notice.warn { background: var(--warn-bg); color: var(--warn); }
+.notice.info { background: var(--info-bg); color: var(--info); }
+.empty { text-align: center; padding: 44px 16px; color: var(--ink-2); }
+.empty .ico { width: 52px; height: 52px; border-radius: 16px; background: var(--line-2); display: grid; place-items: center; margin: 0 auto 14px; color: var(--forest); }
+.spinner { width: 20px; height: 20px; border-radius: 50%; border: 2.5px solid var(--line); border-top-color: var(--forest); animation: spin 0.7s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.center { display: grid; place-items: center; padding: 56px 0; }
+.bar-row { display: grid; grid-template-columns: 130px 1fr 40px; gap: 12px; align-items: center; font-size: 14px; margin: 9px 0; }
+.bar { height: 10px; background: var(--line-2); border-radius: 999px; overflow: hidden; }
+.bar > span { display: block; height: 100%; border-radius: 999px; background: var(--leaf); }
+.cat-dot { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: #fff; flex: none; }
+
+.timeline { position: relative; margin: 0; padding: 0 0 0 22px; list-style: none; }
+.timeline::before { content: ""; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 2px; background: var(--line); }
+.timeline li { position: relative; padding-bottom: 18px; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline li::before { content: ""; position: absolute; left: -21px; top: 5px; width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 3px solid var(--leaf); }
+.timeline li:first-child::before { background: var(--leaf); }
+
+.stars { display: inline-flex; gap: 2px; }
+.stars button { background: none; border: 0; padding: 2px; cursor: pointer; color: #cdcabb; }
+.stars button.on, .stars .on { color: #e6a700; }
+
+.toasts { position: fixed; right: 18px; bottom: 18px; display: flex; flex-direction: column; gap: 10px; z-index: 100; }
+.toast { background: var(--ink); color: #fff; padding: 12px 16px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); max-width: 360px; font-size: 14px; display: flex; gap: 10px; align-items: flex-start; }
+.toast.err { background: var(--danger); }
+
+.modal-back { position: fixed; inset: 0; background: rgba(10, 25, 16, 0.5); display: grid; place-items: center; padding: 16px; z-index: 60; }
+.modal { background: #fff; border-radius: 18px; max-width: 560px; width: 100%; max-height: 90vh; overflow: auto; padding: 24px; }
+
+/* ---------- auth ---------- */
+.auth { min-height: 100%; display: grid; grid-template-columns: 1.05fr 1fr; }
+.auth-art {
+  background: radial-gradient(1000px 500px at 10% 0%, #1f6b3e 0%, transparent 60%), var(--forest-2);
+  color: #fff; padding: 56px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;
+}
+.auth-art h1 { font-size: 46px; max-width: 14ch; line-height: 1.05; }
+.auth-art p { color: #bcd7c6; max-width: 44ch; margin-top: 16px; font-size: 16px; }
+.auth-art .loop { position: absolute; right: -90px; bottom: -90px; opacity: 0.12; }
+.points { display: grid; gap: 14px; margin-top: 8px; }
+.points div { display: flex; gap: 12px; align-items: center; color: #d8ebdf; }
+.points span { width: 34px; height: 34px; border-radius: 10px; background: rgba(190, 242, 100, 0.16); color: var(--lime); display: grid; place-items: center; flex: none; }
+.auth-form { display: grid; place-items: center; padding: 32px 20px; }
+.auth-form .box { width: 100%; max-width: 400px; }
+.demo { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+@media (max-width: 860px) { .auth { grid-template-columns: 1fr; } .auth-art { display: none; } }
+
+.hero-banner {
+  background: linear-gradient(135deg, var(--forest) 0%, #1c7a43 100%); color: #fff; border-radius: 20px; padding: 28px 30px;
+  display: flex; justify-content: space-between; gap: 20px; align-items: center; flex-wrap: wrap; position: relative; overflow: hidden;
+}
+.hero-banner h2 { font-size: 26px; }
+.mini { font-family: var(--display); font-size: 34px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.hero-banner p { color: #cfe6d7; margin-top: 6px; max-width: 48ch; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="app"><div style="padding:40px;text-align:center;font-family:system-ui">Loading Clean Loop…</div></div>
+    <noscript>Clean Loop needs JavaScript enabled.</noscript>
+    <script>
+(function () {
+  "use strict";
+
+  /* ============================ CONFIG ============================ */
+  var CONFIG = {
+    // Your FastAPI backend (include /api/v1). Change this to your deployed backend URL.
+    API_URL: "http://localhost:8000/api/v1",
+    // Optional silent sign-in (no login page). Needed for complaints + analytics because the API requires a token.
+    // These are visible to anyone who views the page source - use a low-privilege demo account.
+    DEMO_EMAIL: "",
+    DEMO_PASSWORD: ""
+  };
+  var API = CONFIG.API_URL.replace(/\/+$/, "");
+
+  /* ============================ HELPERS ============================ */
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var esc = function (s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  };
+  var store = {
+    get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+  var ICONS = {
+    grid: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+    pin: '<path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+    plus: '<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>',
+    list: '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
+    inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+    chart: '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
+    menu: '<line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>',
+    recycle: '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+    star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+    back: '<line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>',
+    check: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+    alert: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+    cross: '<circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/>',
+    x: '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
+    send: '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+    off: '<line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>',
+    left: '<polyline points="15 18 9 12 15 6"/>',
+    right: '<polyline points="9 18 15 12 9 6"/>',
+    ext: '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+    shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+    spark: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.7 1.8L21.5 17.5l-1.8.7L19 20l-.7-1.8-1.8-.7 1.8-.7z"/>'
+  };
+  function icon(n, size) {
+    size = size || 18;
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:none">' + (ICONS[n] || "") + "</svg>";
+  }
+
+  var STATUS_LABEL = { pending: "Pending", acknowledged: "Acknowledged", in_progress: "In progress", resolved: "Resolved", closed: "Closed", rejected: "Rejected" };
+  var STATUSES = Object.keys(STATUS_LABEL);
+  var PRIORITY_LABEL = { low: "Low", medium: "Medium", high: "High", urgent: "Urgent" };
+  var PRIORITIES = Object.keys(PRIORITY_LABEL);
+  var FACILITY_TYPES = {
+    recycling_center: "Recycling center", waste_collection_point: "Collection point", composting_facility: "Composting facility",
+    hazardous_waste_depot: "Hazardous waste depot", e_waste_center: "E-waste center", landfill: "Landfill", transfer_station: "Transfer station"
+  };
+  var CAT_EMOJI = { "wet-waste": "🍎", "dry-waste": "📦", "e-waste": "🔌", "sanitary-waste": "🧻", "hazardous-waste": "⚗️", "construction-waste": "🧱", "garden-waste": "🌿" };
+  var STATUS_COLOR = { pending: "#d99a00", acknowledged: "#2f6fe4", in_progress: "#7050d6", resolved: "#1f9d55", closed: "#8a948d", rejected: "#c8382b" };
+
+  var normStatus = function (s) { return String(s).split(".").pop().toLowerCase(); };
+  var facType = function (t) { return FACILITY_TYPES[t] || String(t || "").replace(/_/g, " ").replace(/^\w/, function (c) { return c.toUpperCase(); }); };
+  function parseAccepted(raw) {
+    if (!raw) return [];
+    try { var v = JSON.parse(raw); if (Array.isArray(v)) return v.map(String); } catch (e) {}
+    return String(raw).split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+  function fmtDateTime(iso) {
+    if (!iso) return "—";
+    var d = new Date(iso); if (isNaN(d)) return "—";
+    return d.toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+  }
+  function timeAgo(iso) {
+    var t = new Date(iso).getTime(); if (isNaN(t)) return "";
+    var s = Math.max(1, Math.round((Date.now() - t) / 1000));
+    if (s < 60) return "just now";
+    var m = Math.round(s / 60); if (m < 60) return m + " min ago";
+    var h = Math.round(m / 60); if (h < 24) return h + " hr ago";
+    var d = Math.round(h / 24); if (d < 30) return d + " day" + (d > 1 ? "s" : "") + " ago";
+    return new Date(iso).toLocaleDateString();
+  }
+  function fmtHours(h) { if (!h) return "—"; return h < 48 ? h.toFixed(1) + " h" : (h / 24).toFixed(1) + " days"; }
+  function mapsLink(lat, lng, q) {
+    return lat != null && lng != null
+      ? "https://www.google.com/maps/search/?api=1&query=" + lat + "," + lng
+      : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q || "");
+  }
+  function newId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      var r = (Math.random() * 16) | 0; return (c === "x" ? r : (r & 3) | 8).toString(16);
+    });
+  }
+
+  /* small html builders */
+  var statusBadge = function (s) { return '<span class="badge b-' + esc(s) + '"><i></i>' + esc(STATUS_LABEL[s] || s) + "</span>"; };
+  var prioBadge = function (p) { return '<span class="badge p-' + esc(p) + '">' + esc(PRIORITY_LABEL[p] || p) + "</span>"; };
+  var notice = function (kind, html) { return '<div class="notice ' + kind + '" role="' + (kind === "err" ? "alert" : "note") + '">' + icon(kind === "ok" ? "check" : "alert") + "<div>" + html + "</div></div>"; };
+  var spinner = '<div class="center"><span class="spinner" role="status" aria-label="Loading"></span></div>';
+  var empty = function (ic, title, body) { return '<div class="empty"><div class="ico">' + icon(ic, 24) + "</div><h3>" + esc(title) + "</h3>" + (body ? '<div style="margin-top:6px">' + body + "</div>" : "") + "</div>"; };
+  var pageHead = function (title, sub, actions) {
+    return '<div class="page-head"><div><h1>' + esc(title) + "</h1>" + (sub ? "<p>" + esc(sub) + "</p>" : "") + "</div>" + (actions ? '<div class="row">' + actions + "</div>" : "") + "</div>";
+  };
+  function pager(page, size, total) {
+    if (total <= size) return "";
+    var pages = Math.ceil(total / size), from = (page - 1) * size + 1, to = Math.min(total, page * size);
+    return '<div class="pager"><span>' + from + "–" + to + " of " + total + '</span><div class="row">' +
+      '<button class="btn ghost sm" data-a="page" data-p="' + (page - 1) + '" ' + (page <= 1 ? "disabled" : "") + ' aria-label="Previous page">' + icon("left", 16) + "</button>" +
+      "<span>" + page + " / " + pages + "</span>" +
+      '<button class="btn ghost sm" data-a="page" data-p="' + (page + 1) + '" ' + (page >= pages ? "disabled" : "") + ' aria-label="Next page">' + icon("right", 16) + "</button></div></div>";
+  }
+  function stars(value, interactive, size) {
+    var out = '<span class="stars">';
+    for (var n = 1; n <= 5; n++) {
+      var on = n <= value;
+      var svg = '<svg width="' + (size || 22) + '" height="' + (size || 22) + '" viewBox="0 0 24 24" fill="' + (on ? "currentColor" : "none") + '" stroke="currentColor" stroke-width="2" stroke-linejoin="round">' + ICONS.star + "</svg>";
+      out += interactive
+        ? '<button type="button" data-a="star" data-v="' + n + '" class="' + (on ? "on" : "") + '" aria-label="' + n + ' star">' + svg + "</button>"
+        : '<span class="' + (on ? "on" : "") + '" style="color:' + (on ? "#e6a700" : "#cdcabb") + '">' + svg + "</span>";
+    }
+    return out + "</span>";
+  }
+
+  /* ============================ API ============================ */
+  function ApiError(status, message) { this.status = status; this.message = message; }
+  ApiError.prototype = Object.create(Error.prototype);
+
+  var token = store.get("cleanloop.token");
+  var me = null;
+  var GUEST = { id: "guest", full_name: "Guest", role: "admin", email: "" };
+  var user = function () { return me || GUEST; };
+  var isStaff = function () { var r = user().role; return r === "municipal_staff" || r === "admin"; };
+
+  function parseDetail(body, fallback) {
+    if (body && typeof body === "object" && body.detail != null) {
+      var d = body.detail;
+      if (typeof d === "string") return d;
+      if (Array.isArray(d)) return d.map(function (e) {
+        var loc = Array.isArray(e.loc) ? e.loc.filter(function (p) { return p !== "body"; }).join(".") : "";
+        return (loc ? loc + ": " : "") + (e.msg || "Invalid input");
+      }).join("; ");
+    }
+    return fallback;
+  }
+
+  async function api(path, o) {
+    o = o || {};
+    var auth = o.auth !== false;
+    var qs = "";
+    if (o.query) {
+      qs = Object.keys(o.query).filter(function (k) { var v = o.query[k]; return v !== undefined && v !== null && v !== ""; })
+        .map(function (k) { return encodeURIComponent(k) + "=" + encodeURIComponent(o.query[k]); }).join("&");
+    }
+    var headers = {}, body;
+    if (auth && token) headers.Authorization = "Bearer " + token;
+    if (o.form) { headers["Content-Type"] = "application/x-www-form-urlencoded"; body = o.form; }
+    else if (o.body !== undefined) { headers["Content-Type"] = "application/json"; body = JSON.stringify(o.body); }
+    var res;
+    try { res = await fetch(API + path + (qs ? "?" + qs : ""), { method: o.method || "GET", headers: headers, body: body }); }
+    catch (e) { throw new ApiError(0, "Can't reach the server at " + API + ". Check that the backend is running and allows this origin (CORS)."); }
+    var text = await res.text(), data = null;
+    if (text) { try { data = JSON.parse(text); } catch (e) { data = text; } }
+    if (!res.ok) {
+      if (res.status === 401 && auth && !token) throw new ApiError(401, "This data needs a signed-in account on the API. Set DEMO_EMAIL and DEMO_PASSWORD at the top of this file, or relax auth on the backend.");
+      if (res.status === 401 && auth && token) { token = null; me = null; store.del("cleanloop.token"); renderUser(); }
+      throw new ApiError(res.status, parseDetail(data, "Request failed (" + res.status + ")"));
+    }
+    return data;
+  }
+
+  /* ============================ UI CHROME ============================ */
+  var view;
+  function toast(msg, kind) {
+    var box = $("#toasts"); if (!box) return;
+    var el = document.createElement("div");
+    el.className = "toast" + (kind === "err" ? " err" : "");
+    el.innerHTML = icon(kind === "err" ? "alert" : "check") + "<span>" + esc(msg) + "</span>";
+    box.appendChild(el);
+    setTimeout(function () { el.remove(); }, 4200);
+  }
+  function openModal(title, html) {
+    var m = $("#modal");
+    m.innerHTML = '<div class="modal-back" data-a="close-modal"><div class="modal" role="dialog" aria-modal="true" aria-label="' + esc(title) + '">' +
+      '<div class="card-title"><h2>' + esc(title) + '</h2><button class="btn ghost sm" data-a="close-modal-btn" aria-label="Close">' + icon("x", 16) + "</button></div>" + html + "</div></div>";
+  }
+  function closeModal() { $("#modal").innerHTML = ""; }
+
+  var NAV = [
+    { href: "#/", label: "Dashboard", ic: "grid", match: /^#\/?$/ },
+    { group: "Citizen" },
+    { href: "#/waste-guide", label: "Waste guide", ic: "spark", match: /^#\/waste-guide/ },
+    { href: "#/facilities", label: "Facilities", ic: "pin", match: /^#\/facilities/ },
+    { href: "#/report", label: "Report an issue", ic: "plus", match: /^#\/report/ },
+    { href: "#/mine", label: "My complaints", ic: "list", match: /^#\/mine/ },
+    { group: "Municipal" },
+    { href: "#/manage", label: "All complaints", ic: "inbox", match: /^#\/manage/ },
+    { href: "#/analytics", label: "Analytics", ic: "chart", match: /^#\/analytics/ }
+  ];
+
+  function buildShell() {
+    var nav = NAV.map(function (n) {
+      return n.group ? '<div class="nav-label">' + n.group + "</div>"
+        : '<a href="' + n.href + '" data-nav="' + n.href + '">' + icon(n.ic) + " " + n.label + "</a>";
+    }).join("");
+    document.getElementById("app").innerHTML =
+      '<div class="shell">' +
+      '<div class="topbar-m"><button class="icon-btn" id="burger" aria-label="Open menu">' + icon("menu", 22) + "</button>Clean Loop</div>" +
+      '<aside class="sidebar" id="sb"><div class="brand"><span class="brand-mark">' + icon("recycle", 20) + "</span>Clean Loop</div>" +
+      '<nav class="nav" id="nav">' + nav + "</nav>" +
+      '<div id="syncbox"></div>' +
+      '<div class="sidebar-foot"><div class="avatar" id="av">G</div><div class="who"><b id="uname">Guest</b><span id="urole">Open access</span></div></div></aside>' +
+      '<main class="main" id="view"></main></div>' +
+      '<div class="toasts" id="toasts" aria-live="polite"></div><div id="modal"></div>';
+    view = $("#view");
+    $("#burger").onclick = function () { $("#sb").classList.add("open"); };
+    $("#nav").onclick = function () { $("#sb").classList.remove("open"); };
+    $("#sb").onclick = function (e) { if (e.target.id === "sb") $("#sb").classList.remove("open"); };
+    $("#modal").onclick = function (e) {
+      var a = e.target.getAttribute && e.target.getAttribute("data-a");
+      if (a === "close-modal" && e.target.classList.contains("modal-back")) closeModal();
+      if (e.target.closest && e.target.closest('[data-a="close-modal-btn"]')) closeModal();
+    };
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
+  }
+  var ROLE_LABEL = { citizen: "Citizen", municipal_staff: "Municipal staff", admin: "Admin" };
+  function renderUser() {
+    var u = user();
+    if ($("#uname")) {
+      $("#uname").textContent = u.full_name;
+      $("#urole").textContent = me ? ROLE_LABEL[u.role] || u.role : "Open access";
+      $("#av").textContent = u.full_name.split(" ").map(function (p) { return p[0]; }).slice(0, 2).join("").toUpperCase();
+    }
+  }
+  function markNav() {
+    var h = location.hash || "#/";
+    var items = document.querySelectorAll("#nav a");
+    for (var i = 0; i < items.length; i++) {
+      var n = NAV.filter(function (x) { return x.href === items[i].getAttribute("data-nav"); })[0];
+      items[i].classList.toggle("active", !!(n && n.match.test(h)));
+    }
+  }
+
+  /* ============================ OFFLINE QUEUE ============================ */
+  var QKEY = "cleanloop.offlineQueue";
+  function readQueue() { try { return JSON.parse(store.get(QKEY) || "[]"); } catch (e) { return []; } }
+  function writeQueue(q) { store.set(QKEY, JSON.stringify(q)); renderSync(); }
+  function renderSync() {
+    var box = $("#syncbox"); if (!box) return;
+    var q = readQueue().length, online = navigator.onLine;
+    if (!q && online) { box.innerHTML = ""; return; }
+    box.innerHTML = '<div class="notice warn" style="margin:10px 4px 0;font-size:13px;flex-direction:column;gap:8px;align-items:stretch"><div class="row" style="gap:8px">' + icon("off", 16) +
+      "<b>" + (online ? "Waiting to sync" : "You're offline") + "</b></div><span>" + q + " complaint" + (q === 1 ? "" : "s") + " saved on this device.</span>" +
+      (online && q ? '<button class="btn lime sm" id="syncnow">Sync now</button>' : "") + "</div>";
+    var b = $("#syncnow"); if (b) b.onclick = function () { flush(false); };
+  }
+  async function flush(silent) {
+    var q = readQueue(); if (!q.length) return;
+    try {
+      var res = await api("/sync/complaints", { method: "POST", body: { complaints: q } });
+      var failed = {};
+      (res.errors || []).forEach(function (e) { if (e && e.client_generated_id) failed[e.client_generated_id] = 1; });
+      var rest = q.filter(function (c) { return c.client_generated_id && failed[c.client_generated_id]; });
+      writeQueue(rest);
+      if (q.length - rest.length) toast("Synced " + (q.length - rest.length) + " offline complaint(s)");
+      if (rest.length && !silent) toast(rest.length + " could not be synced yet", "err");
+    } catch (e) { if (!silent) toast(e.message, "err"); }
+  }
+
+  /* ============================ PAGES ============================ */
+  function reset() { view.onclick = view.onsubmit = view.onchange = null; }
+
+  /* ---- Dashboard ---- */
+  async function pageDashboard() {
+    var staff = isStaff();
+    var r = await Promise.allSettled([api("/complaints/mine", { query: { page_size: 100 } }), staff ? api("/analytics/overview") : Promise.resolve(null)]);
+    var mine = r[0], ov = r[1];
+    var list = mine.status === "fulfilled" ? mine.value.complaints : [];
+    var open = list.filter(function (c) { return ["resolved", "closed", "rejected"].indexOf(c.status) < 0; }).length;
+    var resolved = list.filter(function (c) { return c.status === "resolved"; }).length;
+
+    var overview = "";
+    if (staff) {
+      if (ov.status === "rejected") overview = '<section style="margin-bottom:28px"><div class="card-title"><h2>City overview</h2></div>' + notice("err", esc(ov.reason.message)) + "</section>";
+      else if (ov.value) {
+        var d = ov.value;
+        var waiting = d.status_breakdown.filter(function (s) { return ["pending", "acknowledged"].indexOf(normStatus(s.status)) >= 0; }).reduce(function (a, b) { return a + b.count; }, 0);
+        overview = '<section style="margin-bottom:28px"><div class="card-title"><h2>City overview</h2><a href="#/analytics" class="sm">Full analytics →</a></div><div class="grid g4">' +
+          '<div class="card stat hero"><div class="label">' + icon("inbox", 16) + ' Total complaints</div><div class="num">' + d.total_complaints + "</div></div>" +
+          '<div class="card stat"><div class="label">' + icon("clock", 16) + ' Awaiting action</div><div class="num">' + waiting + '</div><div class="sub">pending + acknowledged</div></div>' +
+          '<div class="card stat"><div class="label">' + icon("check", 16) + ' Avg. resolution</div><div class="num">' + fmtHours(d.avg_resolution_hours) + "</div></div>" +
+          '<div class="card stat"><div class="label">' + icon("chart", 16) + ' This month</div><div class="num">' + d.complaints_this_month + '</div><div class="sub">' + d.complaints_last_month + " last month</div></div></div></section>";
+      }
+    }
+
+    var recent;
+    if (mine.status === "rejected") recent = notice("err", esc(mine.reason.message));
+    else if (!list.length) recent = empty("plus", "No complaints yet", '<a href="#/report">File your first report</a>');
+    else recent = '<div class="list">' + list.slice(0, 5).map(function (c) {
+      return '<a class="item" href="#/complaint/' + esc(c.id) + '"><div class="grow"><div class="title clip">' + esc(c.title) + '</div><div class="faint">' +
+        esc(c.locality || c.city || "No location") + " · " + timeAgo(c.created_at) + "</div></div>" + prioBadge(c.priority) + statusBadge(c.status) + "</a>";
+    }).join("") + "</div>";
+
+    view.innerHTML =
+      '<div class="hero-banner" style="margin-bottom:24px"><div><h2>Hello, ' + esc(user().full_name.split(" ")[0]) + "</h2><p>" +
+      (staff ? "Here's how the city's waste complaints are moving today." : "Spotted overflowing bins or illegal dumping? Report it and we'll keep you posted.") +
+      '</p></div><div class="row"><a href="#/report" class="btn lime">' + icon("plus", 17) + ' Report an issue</a><a href="#/waste-guide" class="btn ghost">' + icon("spark", 17) + " What goes where?</a></div></div>" +
+      overview +
+      '<section class="grid split"><div class="card"><div class="card-title"><h2>Your recent complaints</h2><a href="#/mine" class="sm">View all →</a></div>' + recent + "</div>" +
+      '<div class="stack"><div class="card"><h3 style="margin-bottom:12px">Your activity</h3><div class="grid g2"><div><div class="faint">Open</div><div class="mini">' + open + '</div></div><div><div class="faint">Resolved</div><div class="mini">' + resolved + "</div></div></div></div>" +
+      '<a href="#/facilities" class="card item" style="align-items:center;text-decoration:none"><span class="cat-dot" style="background:var(--forest)">' + icon("pin", 20) + '</span><div class="grow"><div class="title">Find a facility</div><div class="faint">Recycling, e-waste, composting and more</div></div></a>' +
+      (staff ? '<a href="#/manage" class="card item" style="align-items:center;text-decoration:none"><span class="cat-dot" style="background:#5b3fc4">' + icon("chart", 20) + '</span><div class="grow"><div class="title">Review all complaints</div><div class="faint">Update status and add remarks</div></div></a>' : "") +
+      "</div></section>";
+  }
+
+  /* ---- Waste guide ---- */
+  async function pageWaste() {
+    var cats = await api("/waste/categories", { auth: false });
+    var byId = {}; cats.forEach(function (c) { byId[c.id] = c; });
+    var sel = null, locality = "";
+    var color = function (c) { return c.color_code || "#14532d"; };
+    var emoji = function (c) { return CAT_EMOJI[c.slug] || "🗑️"; };
+
+    view.innerHTML = pageHead("Waste guide", "Not sure which bin it belongs in? Describe the item and get disposal guidance.") +
+      '<div class="card" style="margin-bottom:20px"><form id="cform" class="grid" style="grid-template-columns:1fr 1fr auto;align-items:end">' +
+      '<label class="field">Item<input class="input" name="item" required maxlength="255" placeholder="e.g. old phone charger"></label>' +
+      '<label class="field">Details <span class="hint">optional</span><input class="input" name="desc" maxlength="500" placeholder="e.g. frayed cable, lithium battery"></label>' +
+      '<button class="btn">' + icon("spark", 17) + ' Classify</button></form><div id="cres"></div></div>' +
+      '<div class="card-title"><h2>Categories</h2><span class="faint">Select one for local disposal rules</span></div>' +
+      (cats.length ? '<div class="grid g4" style="margin-bottom:20px">' + cats.map(function (c) {
+        return '<button class="card" data-a="cat" data-id="' + esc(c.id) + '" style="text-align:left;cursor:pointer"><span class="cat-dot" style="background:' + esc(color(c)) + ';margin-bottom:12px;font-size:20px">' + emoji(c) +
+          "</span><h3>" + esc(c.name) + '</h3><p class="sm muted" style="margin-top:4px">' + esc(c.description || "Tap to see disposal rules.") + "</p></button>";
+      }).join("") + "</div>" : '<div class="card">' + empty("recycle", "No categories configured", "Run the backend seed script to add waste categories.") + "</div>") +
+      '<div id="rules"></div>';
+
+    async function loadRules(c) {
+      sel = c;
+      var box = $("#rules");
+      box.innerHTML = '<div class="card">' + spinner + "</div>";
+      try {
+        var rules = await api("/waste/rules", { auth: false, query: { category_id: c.id, locality: locality.trim() } });
+        box.innerHTML = '<div class="card"><div class="card-title" style="flex-wrap:wrap"><h2>' + esc(c.name) + ' · disposal rules</h2>' +
+          '<form id="lform" class="row"><input class="input" style="width:220px" name="loc" placeholder="Filter by locality" value="' + esc(locality) + '"><button class="btn ghost sm" aria-label="Search locality">' + icon("search", 15) + "</button></form></div>" +
+          (rules.length ? '<div class="grid g2">' + rules.map(function (r) {
+            return '<div class="card flat"><div class="row spread" style="align-items:flex-start"><h3>' + esc(r.title) + "</h3>" + (r.locality ? '<span class="tag">' + esc(r.locality) + "</span>" : "") + "</div>" +
+              (r.description ? '<p class="sm muted" style="margin-top:4px">' + esc(r.description) + "</p>" : "") + '<p style="margin-top:10px">' + esc(r.instructions) + "</p>" +
+              (r.pickup_schedule || r.pickup_time ? '<p class="row sm" style="margin-top:10px;color:var(--forest);font-weight:600">' + icon("clock", 15) + " " + esc([r.pickup_schedule, r.pickup_time].filter(Boolean).join(" · ")) + "</p>" : "") +
+              (r.tips ? '<p class="sm muted" style="margin-top:8px">💡 ' + esc(r.tips) + "</p>" : "") +
+              (r.warnings ? '<div style="margin-top:10px">' + notice("warn", esc(r.warnings)) + "</div>" : "") + "</div>";
+          }).join("") + "</div>" : empty("search", "No rules found", locality ? "Try a different locality or clear the filter." : "No rules have been added for this category.")) +
+          '<p class="sm muted" style="margin-top:16px">Seeing improper dumping instead? <a href="#/report">Report an issue</a>.</p></div>';
+      } catch (e) { box.innerHTML = '<div class="card">' + notice("err", esc(e.message)) + "</div>"; }
+    }
+
+    view.onclick = function (e) {
+      var t = e.target.closest("[data-a=cat]");
+      if (t) { loadRules(byId[t.getAttribute("data-id")]); $("#rules").scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+    };
+    view.onsubmit = async function (e) {
+      e.preventDefault();
+      if (e.target.id === "lform") { locality = e.target.loc.value; if (sel) loadRules(sel); return; }
+      if (e.target.id !== "cform") return;
+      var f = e.target, out = $("#cres");
+      out.innerHTML = '<div style="margin-top:14px">' + spinner + "</div>";
+      try {
+        var r = await api("/waste/classify", { method: "POST", auth: false, body: { item_name: f.item.value.trim(), description: f.desc.value.trim() || undefined } });
+        var c = r.category;
+        out.innerHTML = '<div style="margin-top:18px;border-radius:14px;padding:18px;background:' + esc(color(c)) + '14;border:1px solid ' + esc(color(c)) + '40;display:flex;gap:16px;align-items:flex-start">' +
+          '<span class="cat-dot" style="background:' + esc(color(c)) + ';width:48px;height:48px;font-size:24px">' + emoji(c) + '</span><div style="flex:1;min-width:0"><div class="row spread"><div><div class="faint">“' + esc(r.item_name) + '” goes in</div><h2>' + esc(c.name) + "</h2></div>" +
+          '<span class="tag">' + Math.round(r.confidence * 100) + "% match</span></div><p style=\"margin-top:8px\">" + esc(r.disposal_instructions) + "</p>" +
+          (r.tips ? '<p class="sm muted" style="margin-top:8px">💡 ' + esc(r.tips) + "</p>" : "") +
+          (r.confidence < 0.5 ? '<p class="sm" style="margin-top:10px;color:var(--warn)">Low confidence — double-check the category rules below before disposing.</p>' : "") + "</div></div>";
+        loadRules(byId[c.id] || c);
+      } catch (err) { out.innerHTML = '<div style="margin-top:14px">' + notice("err", esc(err.message)) + "</div>"; }
+    };
+  }
+
+  /* ---- Facilities ---- */
+  async function pageFacilities() {
+    var S = { city: "", type: "", verified: false, page: 1, near: null, radius: 5 }, SIZE = 12;
+    view.innerHTML = pageHead("Facilities", "Recycling centers, e-waste depots, composting sites and collection points.") +
+      '<div class="card" style="margin-bottom:18px"><form id="ff" class="row" style="align-items:flex-end">' +
+      '<label class="field" style="flex:1 1 200px">City<input class="input" name="city" placeholder="e.g. Bangalore"></label>' +
+      '<label class="field" style="flex:1 1 200px">Type<select class="input" name="type"><option value="">All types</option>' +
+      Object.keys(FACILITY_TYPES).map(function (k) { return '<option value="' + k + '">' + FACILITY_TYPES[k] + "</option>"; }).join("") + "</select></label>" +
+      '<button class="btn">' + icon("search", 16) + ' Search</button><button type="button" class="btn ghost" data-a="locate">' + icon("cross", 16) + " Near me</button></form>" +
+      '<div class="row spread" style="margin-top:14px"><label class="check"><input type="checkbox" id="ver"> Verified facilities only</label><div class="row" id="nearctl"></div></div><div id="geoerr"></div></div><div id="flist"></div>';
+    var items = [];
+
+    async function load() {
+      var box = $("#flist"); box.innerHTML = spinner;
+      try {
+        var total;
+        if (S.near) {
+          items = await api("/facilities/nearby", { auth: false, query: { latitude: S.near.lat, longitude: S.near.lng, radius_km: S.radius, facility_type: S.type, verified_only: S.verified, limit: 50 } });
+          total = items.length;
+        } else {
+          var r = await api("/facilities", { auth: false, query: { city: S.city, facility_type: S.type, verified_only: S.verified, page: S.page, page_size: SIZE } });
+          items = r.facilities; total = r.total;
+        }
+        $("#nearctl").innerHTML = S.near ? '<span class="sm muted">Within</span><select class="input" style="width:100px" id="rad">' +
+          [2, 5, 10, 25, 50].map(function (r) { return '<option value="' + r + '"' + (r === S.radius ? " selected" : "") + ">" + r + " km</option>"; }).join("") + '</select><button class="btn ghost sm" data-a="clear-near" type="button">Clear location</button>' : "";
+        if (!items.length) { box.innerHTML = '<div class="card">' + empty("pin", "No facilities found", S.near ? "Try a larger radius." : "Try another city or remove some filters.") + "</div>"; return; }
+        box.innerHTML = (S.near ? '<p class="sm muted" style="margin-bottom:10px">' + total + " within " + S.radius + " km of you</p>" : "") +
+          '<div class="grid g3">' + items.map(function (f, i) {
+            return '<button class="card" data-a="fac" data-i="' + i + '" style="text-align:left;cursor:pointer"><div class="row spread" style="align-items:flex-start;flex-wrap:nowrap"><span class="cat-dot" style="background:var(--forest)">' + icon("recycle", 20) + "</span>" +
+              (f.is_verified ? '<span class="verified">' + icon("check", 16) + " Verified</span>" : '<span class="faint">Unverified</span>') + '</div><h3 style="margin-top:12px">' + esc(f.name) +
+              '</h3><div class="faint" style="margin-top:2px">' + esc(facType(f.facility_type)) + '</div><p class="sm muted" style="margin-top:10px">' + esc(f.address) + ", " + esc(f.city) + '</p><div class="chips" style="margin-top:10px">' +
+              parseAccepted(f.accepted_waste_types).slice(0, 3).map(function (w) { return '<span class="tag">' + esc(w) + "</span>"; }).join("") + "</div></button>";
+          }).join("") + "</div>" + (S.near ? "" : pager(S.page, SIZE, total));
+      } catch (e) { box.innerHTML = notice("err", esc(e.message)); }
+    }
+
+    view.onsubmit = function (e) {
+      e.preventDefault();
+      S.city = e.target.city.value.trim(); S.type = e.target.type.value; S.near = null; S.page = 1; load();
+    };
+    view.onchange = function (e) {
+      if (e.target.id === "ver") { S.verified = e.target.checked; S.page = 1; load(); }
+      else if (e.target.id === "rad") { S.radius = Number(e.target.value); load(); }
+      else if (e.target.name === "type") { S.type = e.target.value; S.page = 1; load(); }
+    };
+    view.onclick = function (e) {
+      var t = e.target.closest("[data-a]"); if (!t) return;
+      var a = t.getAttribute("data-a");
+      if (a === "page") { S.page = Number(t.getAttribute("data-p")); load(); }
+      else if (a === "clear-near") { S.near = null; load(); }
+      else if (a === "locate") {
+        $("#geoerr").innerHTML = "";
+        if (!navigator.geolocation) { $("#geoerr").innerHTML = '<div style="margin-top:12px">' + notice("warn", "Location isn't supported in this browser.") + "</div>"; return; }
+        navigator.geolocation.getCurrentPosition(function (p) { S.near = { lat: p.coords.latitude, lng: p.coords.longitude }; S.page = 1; load(); },
+          function () { $("#geoerr").innerHTML = '<div style="margin-top:12px">' + notice("warn", "Couldn't get your location. Allow location access or search by city.") + "</div>"; }, { timeout: 10000 });
+      } else if (a === "fac") {
+        var f = items[Number(t.getAttribute("data-i"))], acc = parseAccepted(f.accepted_waste_types);
+        openModal(f.name, '<div class="stack"><div class="row"><span class="tag">' + esc(facType(f.facility_type)) + "</span>" +
+          (f.is_verified ? '<span class="verified">' + icon("check", 16) + " Verified</span>" : '<span class="faint">Not yet verified by the municipality</span>') + "</div>" +
+          (f.description ? "<p>" + esc(f.description) + "</p>" : "") + '<div class="stack" style="gap:8px"><div class="row" style="flex-wrap:nowrap;align-items:flex-start">' + icon("pin", 17) + "<span>" +
+          esc([f.address, f.city, f.state, f.postal_code].filter(Boolean).join(", ")) + "</span></div>" +
+          (f.operating_hours ? '<div class="row" style="flex-wrap:nowrap;align-items:flex-start">' + icon("clock", 17) + "<span>" + esc(f.operating_hours) + "</span></div>" : "") +
+          (f.phone ? '<div class="row">📞 <a href="tel:' + esc(f.phone) + '">' + esc(f.phone) + "</a></div>" : "") +
+          (f.email ? '<div class="row">✉️ <a href="mailto:' + esc(f.email) + '">' + esc(f.email) + "</a></div>" : "") +
+          (f.website && /^https?:\/\//.test(f.website) ? '<div class="row">🌐 <a href="' + esc(f.website) + '" target="_blank" rel="noreferrer">' + esc(f.website) + "</a></div>" : "") + "</div>" +
+          (acc.length ? '<div><div class="faint" style="margin-bottom:6px">Accepts</div><div class="chips">' + acc.map(function (w) { return '<span class="tag">' + esc(w) + "</span>"; }).join("") + "</div></div>" : "") +
+          '<a class="btn" href="' + mapsLink(f.latitude, f.longitude, f.name + " " + f.address + " " + f.city) + '" target="_blank" rel="noreferrer">' + icon("ext", 16) + " Open in Maps</a></div>");
+      }
+    };
+    load();
+  }
+
+  /* ---- Report an issue ---- */
+  async function pageReport() {
+    var cats = [];
+    try { cats = await api("/waste/categories", { auth: false }); } catch (e) {}
+    var coords = null;
+    view.innerHTML = pageHead("Report an issue", "Describe what you've seen and where. Staff will review it and update the status.") +
+      (!navigator.onLine ? '<div style="margin-bottom:16px">' + notice("warn", "You're offline. Your report will be saved here and sent when you reconnect.") + "</div>" : "") +
+      '<form id="rf" class="grid split"><div class="card stack"><div id="rerr"></div>' +
+      '<label class="field">Title<input class="input" name="title" required maxlength="255" placeholder="e.g. Overflowing bin near bus stop"></label>' +
+      '<label class="field">What\'s happening?<textarea class="input" name="description" required placeholder="Describe the problem, how long it\'s been there, and anything that helps crews find it."></textarea></label>' +
+      '<div class="grid g2"><label class="field">Waste type <span class="hint">optional</span><select class="input" name="cat"><option value="">Not sure</option>' +
+      cats.map(function (c) { return '<option value="' + esc(c.id) + '">' + esc(c.name) + "</option>"; }).join("") + "</select></label>" +
+      '<label class="field">Photo link <span class="hint">optional</span><input class="input" type="url" name="photo" maxlength="500" placeholder="https://…"></label></div></div>' +
+      '<div class="stack"><div class="card stack"><h3>Where</h3><label class="field">Address<input class="input" name="address" placeholder="Street or landmark"></label>' +
+      '<div class="grid g2"><label class="field">City<input class="input" name="city" maxlength="100"></label><label class="field">Locality<input class="input" name="locality" maxlength="255"></label></div>' +
+      '<button type="button" class="btn ghost" data-a="locate">' + icon("cross", 16) + ' <span id="loctxt">Use my current location</span></button><p class="sm muted" id="coords"></p></div>' +
+      '<div class="card stack"><h3>Priority</h3><div class="chips" id="prio">' + PRIORITIES.map(function (p) {
+        return '<button type="button" class="chip' + (p === "medium" ? " on" : "") + '" data-a="prio" data-v="' + p + '">' + PRIORITY_LABEL[p] + "</button>";
+      }).join("") + '</div><p class="faint">Use “Urgent” only for health or safety hazards.</p></div>' +
+      '<button class="btn block" id="rsub">' + icon("send", 16) + ' Submit complaint</button><a href="#/mine" class="sm" style="text-align:center">Cancel</a></div></form>';
+    var priority = "medium";
+
+    view.onclick = function (e) {
+      var t = e.target.closest("[data-a]"); if (!t) return;
+      var a = t.getAttribute("data-a");
+      if (a === "prio") {
+        priority = t.getAttribute("data-v");
+        Array.prototype.forEach.call($("#prio").children, function (c) { c.classList.toggle("on", c === t); });
+      } else if (a === "locate") {
+        if (!navigator.geolocation) { $("#rerr").innerHTML = notice("err", "Location isn't supported in this browser."); return; }
+        navigator.geolocation.getCurrentPosition(function (p) {
+          coords = { latitude: +p.coords.latitude.toFixed(6), longitude: +p.coords.longitude.toFixed(6) };
+          $("#coords").textContent = "Pinned at " + coords.latitude + ", " + coords.longitude; $("#loctxt").textContent = "Update my location";
+        }, function () { $("#rerr").innerHTML = notice("err", "Couldn't get your location. You can still type the address."); }, { timeout: 10000 });
+      }
+    };
+    view.onsubmit = async function (e) {
+      e.preventDefault();
+      var f = e.target, btn = $("#rsub"); btn.disabled = true; $("#rerr").innerHTML = "";
+      var body = {
+        title: f.title.value.trim(), description: f.description.value.trim(), waste_category_id: f.cat.value || null,
+        address: f.address.value.trim() || null, city: f.city.value.trim() || null, locality: f.locality.value.trim() || null,
+        latitude: coords ? coords.latitude : null, longitude: coords ? coords.longitude : null, priority: priority,
+        photo_url: f.photo.value.trim() || null, client_generated_id: newId()
+      };
+      try {
+        if (!navigator.onLine) throw new ApiError(0, "offline");
+        var c = await api("/complaints", { method: "POST", body: body });
+        toast("Complaint submitted"); location.hash = "#/complaint/" + c.id;
+      } catch (err) {
+        if (err.status === 0) { writeQueue(readQueue().concat([body])); toast("Saved on this device — it will sync automatically"); location.hash = "#/mine"; }
+        else { $("#rerr").innerHTML = notice("err", esc(err.message)); btn.disabled = false; }
+      }
+    };
+  }
+
+  /* ---- Complaint lists ---- */
+  async function pageList(mode) {
+    var S = { status: "", priority: "", city: "", page: 1 }, SIZE = 15;
+    view.innerHTML = pageHead(mode === "mine" ? "My complaints" : "All complaints", mode === "mine" ? "Everything you've reported and where it stands." : "Review, prioritise and update citizen reports.",
+      mode === "mine" ? '<a href="#/report" class="btn">' + icon("plus", 16) + " New report</a>" : "") +
+      '<div id="qn"></div><div class="card" style="margin-bottom:16px"><div class="chips" id="chips"></div>' +
+      (mode === "all" ? '<form id="lf" class="row" style="margin-top:14px"><select class="input" style="width:170px" name="prio" aria-label="Priority filter"><option value="">Any priority</option>' +
+        PRIORITIES.map(function (p) { return '<option value="' + p + '">' + PRIORITY_LABEL[p] + "</option>"; }).join("") +
+        '</select><input class="input" style="width:220px" name="city" placeholder="Filter by city"><button class="btn ghost">' + icon("search", 16) + " Apply</button></form>" : "") +
+      '</div><div class="card" id="lbox"></div>';
+    var q = readQueue();
+    if (mode === "mine" && q.length) $("#qn").innerHTML = '<div style="margin-bottom:16px">' + notice("warn", q.length + " complaint(s) saved on this device, will sync when you're online: <b>" + esc(q.map(function (x) { return x.title; }).join(", ")) + "</b>") + "</div>";
+
+    function chips() {
+      $("#chips").innerHTML = '<button class="chip' + (S.status === "" ? " on" : "") + '" data-a="status" data-v="">All</button>' + STATUSES.map(function (s) {
+        return '<button class="chip' + (S.status === s ? " on" : "") + '" data-a="status" data-v="' + s + '">' + STATUS_LABEL[s] + "</button>";
+      }).join("");
+    }
+    async function load() {
+      chips(); var box = $("#lbox"); box.innerHTML = spinner;
+      try {
+        var r = mode === "mine"
+          ? await api("/complaints/mine", { query: { status: S.status, page: S.page, page_size: SIZE } })
+          : await api("/complaints", { query: { status: S.status, priority: S.priority, city: S.city, page: S.page, page_size: SIZE } });
+        if (!r.complaints.length) { box.innerHTML = empty("inbox", "Nothing here", mode === "mine" ? '<a href="#/report">Report your first issue</a>' : "No complaints match these filters."); return; }
+        box.innerHTML = '<div class="table-wrap"><table class="t"><thead><tr><th>Complaint</th>' + (mode === "all" ? "<th>Reporter</th>" : "") + "<th>Location</th><th>Priority</th><th>Status</th><th>Filed</th></tr></thead><tbody>" +
+          r.complaints.map(function (c) {
+            return '<tr class="click" data-a="open" data-id="' + esc(c.id) + '"><td style="max-width:320px"><a href="#/complaint/' + esc(c.id) + '" style="font-weight:600;color:var(--ink)">' + esc(c.title) + "</a>" +
+              (c.waste_category ? '<div class="faint">' + esc(c.waste_category.name) + "</div>" : "") + "</td>" + (mode === "all" ? "<td>" + esc(c.reporter && c.reporter.full_name) + "</td>" : "") +
+              '<td class="muted">' + (esc([c.locality, c.city].filter(Boolean).join(", ")) || "—") + "</td><td>" + prioBadge(c.priority) + "</td><td>" + statusBadge(c.status) + '</td><td class="muted" style="white-space:nowrap">' + timeAgo(c.created_at) + "</td></tr>";
+          }).join("") + "</tbody></table></div>" + pager(S.page, SIZE, r.total);
+      } catch (e) { box.innerHTML = notice("err", esc(e.message)); }
+    }
+    view.onclick = function (e) {
+      var t = e.target.closest("[data-a]"); if (!t) return;
+      var a = t.getAttribute("data-a");
+      if (a === "status") { S.status = t.getAttribute("data-v"); S.page = 1; load(); }
+      else if (a === "page") { S.page = Number(t.getAttribute("data-p")); load(); }
+      else if (a === "open" && !e.target.closest("a")) location.hash = "#/complaint/" + t.getAttribute("data-id");
+    };
+    view.onsubmit = function (e) { e.preventDefault(); S.priority = e.target.prio.value; S.city = e.target.city.value.trim(); S.page = 1; load(); };
+    load();
+  }
+
+  /* ---- Complaint detail ---- */
+  async function pageDetail(id) {
+    var c = await api("/complaints/" + encodeURIComponent(id));
+    var u = user(), isOwner = u.id === c.reporter_id, staff = isStaff();
+    var myFb = (c.feedbacks || []).filter(function (f) { return f.user_id === u.id; })[0];
+    var canFb = isOwner && c.status === "resolved" && !myFb;
+    var rating = 0;
+    var hist = (c.status_history || []).slice().sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+
+    view.innerHTML = '<a href="' + (staff && !isOwner ? "#/manage" : "#/mine") + '" class="row sm" style="margin-bottom:16px">' + icon("back", 15) + " Back to complaints</a>" +
+      '<div class="page-head"><div><div class="row" style="margin-bottom:10px">' + statusBadge(c.status) + prioBadge(c.priority) + (c.waste_category ? '<span class="tag">' + esc(c.waste_category.name) + "</span>" : "") +
+      "</div><h1>" + esc(c.title) + '</h1><p class="faint" style="margin-top:6px">Filed ' + fmtDateTime(c.created_at) + " · Ref " + esc(c.id.slice(0, 8)) + "</p></div></div>" +
+      '<div class="grid split"><div class="stack" style="gap:16px">' +
+      '<div class="card stack"><h3>Details</h3><p style="white-space:pre-wrap">' + esc(c.description) + "</p>" +
+      (c.photo_url && /^https?:\/\//.test(c.photo_url) ? '<a href="' + esc(c.photo_url) + '" target="_blank" rel="noreferrer"><img src="' + esc(c.photo_url) + '" alt="Complaint photo" style="max-width:100%;max-height:320px;border-radius:12px;object-fit:cover"></a>' : "") +
+      (c.resolution_notes ? notice("ok", "<b>Resolution:</b> " + esc(c.resolution_notes)) : "") + "</div>" +
+      (canFb || myFb ? '<div class="card stack"><h3>Your feedback</h3>' + (myFb
+        ? '<div class="stack" style="gap:6px">' + stars(myFb.rating, false) + (myFb.comment ? "<p>" + esc(myFb.comment) + "</p>" : "") + '<p class="faint">Submitted ' + fmtDateTime(myFb.created_at) + "</p></div>"
+        : '<form id="fbf" class="stack"><p class="muted">How well was this resolved?</p><div id="fbstars">' + stars(0, true, 28) + '</div><textarea class="input" name="comment" placeholder="Anything else you\'d like to tell us? (optional)"></textarea><div id="fberr"></div><button class="btn" style="align-self:flex-start">Submit feedback</button></form>') + "</div>" : "") +
+      (staff && !isOwner && c.feedbacks && c.feedbacks.length ? '<div class="card stack"><h3>Citizen feedback</h3>' + c.feedbacks.map(function (f) { return "<div>" + stars(f.rating, false, 18) + (f.comment ? '<p style="margin-top:4px">' + esc(f.comment) + "</p>" : "") + "</div>"; }).join("") + "</div>" : "") +
+      '<div class="card"><h3 style="margin-bottom:16px">Status history</h3>' + (hist.length ? '<ol class="timeline">' + hist.map(function (h) {
+        return "<li><div class=\"row\" style=\"gap:8px\">" + (h.previous_status ? statusBadge(h.previous_status) + '<span class="faint">→</span>' : "") + statusBadge(h.new_status) + "</div>" +
+          (h.remarks ? '<p style="margin-top:6px">' + esc(h.remarks) + "</p>" : "") + '<p class="faint" style="margin-top:2px">' + fmtDateTime(h.created_at) + "</p></li>";
+      }).join("") + "</ol>" : '<p class="muted">No updates yet.</p>') + "</div></div>" +
+      '<div class="stack" style="gap:16px">' +
+      (staff ? '<form id="stf" class="card stack"><h3 class="row">' + icon("shield", 19) + ' Update status</h3><label class="field">New status<select class="input" name="st" required><option value="">Select…</option>' +
+        STATUSES.filter(function (s) { return s !== c.status; }).map(function (s) { return '<option value="' + s + '">' + STATUS_LABEL[s] + "</option>"; }).join("") +
+        '</select></label><label class="field">Remarks <span class="hint">visible in the history</span><textarea class="input" style="min-height:80px" name="remarks"></textarea></label><div id="sterr"></div><button class="btn">Save update</button></form>' : "") +
+      '<div class="card stack" style="gap:10px"><h3>Location</h3><div class="row" style="flex-wrap:nowrap;align-items:flex-start">' + icon("pin", 17) + "<span>" + (esc([c.address, c.locality, c.city].filter(Boolean).join(", ")) || "No address given") + "</span></div>" +
+      (c.latitude != null && c.longitude != null ? '<a class="row sm" href="' + mapsLink(c.latitude, c.longitude) + '" target="_blank" rel="noreferrer">' + icon("ext", 14) + " View on map (" + Number(c.latitude).toFixed(4) + ", " + Number(c.longitude).toFixed(4) + ")</a>" : "") +
+      (c.facility ? '<p class="sm muted">Assigned facility: <b>' + esc(c.facility.name) + "</b> (" + esc(facType(c.facility.facility_type)) + ")</p>" : "") + "</div>" +
+      '<div class="card stack" style="gap:10px"><h3>Reporter</h3><div class="row">👤 ' + esc(c.reporter && c.reporter.full_name) + "</div>" +
+      (staff && c.reporter ? '<div class="faint">' + esc(c.reporter.email) + (c.reporter.phone ? " · " + esc(c.reporter.phone) : "") + "</div>" : "") +
+      (c.resolved_at ? '<div class="faint">Resolved ' + fmtDateTime(c.resolved_at) + "</div>" : "") + "</div></div></div>";
+
+    view.onclick = function (e) {
+      var t = e.target.closest("[data-a=star]"); if (!t) return;
+      rating = Number(t.getAttribute("data-v")); $("#fbstars").innerHTML = stars(rating, true, 28);
+    };
+    view.onsubmit = async function (e) {
+      e.preventDefault();
+      var btn = e.target.querySelector("button.btn:not([data-a])");
+      if (e.target.id === "stf") {
+        if (btn) btn.disabled = true;
+        try {
+          await api("/complaints/" + encodeURIComponent(c.id) + "/status", { method: "PATCH", body: { new_status: e.target.st.value, remarks: e.target.remarks.value.trim() || undefined } });
+          toast("Status updated"); route();
+        } catch (err) { $("#sterr").innerHTML = notice("err", esc(err.message)); if (btn) btn.disabled = false; }
+      } else if (e.target.id === "fbf") {
+        if (!rating) { $("#fberr").innerHTML = notice("err", "Choose a star rating first."); return; }
+        if (btn) btn.disabled = true;
+        try {
+          await api("/complaints/" + encodeURIComponent(c.id) + "/feedback", { method: "POST", body: { rating: rating, comment: e.target.comment.value.trim() || undefined } });
+          toast("Thanks for your feedback"); route();
+        } catch (err) { $("#fberr").innerHTML = notice("err", esc(err.message)); if (btn) btn.disabled = false; }
+      }
+    };
+  }
+
+  /* ---- Analytics ---- */
+  async function pageAnalytics() {
+    var r = await Promise.allSettled([api("/analytics/overview"), api("/analytics/hotspots", { query: { limit: 10 } })]);
+    if (r[0].status === "rejected") { view.innerHTML = pageHead("Analytics") + notice("err", esc(r[0].reason.message)); return; }
+    var d = r[0].value, hs = r[1];
+    var status = d.status_breakdown.map(function (s) { return { key: normStatus(s.status), count: s.count }; });
+    var total = Math.max(1, d.total_complaints);
+    var maxCat = Math.max.apply(null, [1].concat(d.category_breakdown.map(function (c) { return c.count; })));
+    var resolved = (status.filter(function (s) { return s.key === "resolved"; })[0] || { count: 0 }).count;
+    var delta = d.complaints_last_month ? Math.round(((d.complaints_this_month - d.complaints_last_month) / d.complaints_last_month) * 100) : null;
+
+    view.innerHTML = pageHead("Analytics", "Complaint volume, response times and where problems cluster.") +
+      '<div class="grid g4" style="margin-bottom:16px"><div class="card stat hero"><div class="label">' + icon("inbox", 16) + " Total complaints</div><div class=\"num\">" + d.total_complaints + "</div></div>" +
+      '<div class="card stat"><div class="label">' + icon("check", 16) + ' Resolution rate</div><div class="num">' + Math.round((resolved / total) * 100) + '%</div><div class="sub">' + resolved + " resolved</div></div>" +
+      '<div class="card stat"><div class="label">' + icon("clock", 16) + ' Avg. time to resolve</div><div class="num">' + fmtHours(d.avg_resolution_hours) + "</div></div>" +
+      '<div class="card stat"><div class="label">' + icon("chart", 16) + ' This month</div><div class="num">' + d.complaints_this_month + '</div><div class="sub">' +
+      (delta === null ? d.complaints_last_month + " last month" : '<span class="' + (delta > 0 ? "delta-up" : "delta-down") + '">' + (delta > 0 ? "+" : "") + delta + "% vs last month (" + d.complaints_last_month + ")</span>") + "</div></div></div>" +
+      '<div class="grid g2" style="margin-bottom:16px"><div class="card"><div class="card-title"><h2>By status</h2></div>' + (status.length
+        ? '<div style="display:flex;height:14px;border-radius:999px;overflow:hidden;margin-bottom:14px">' + status.map(function (s) { return '<span style="width:' + (s.count / total) * 100 + "%;background:" + (STATUS_COLOR[s.key] || "#999") + '"></span>'; }).join("") + "</div>" +
+          status.map(function (s) {
+            return '<div class="bar-row"><span class="row" style="gap:8px"><i style="width:9px;height:9px;border-radius:50%;background:' + (STATUS_COLOR[s.key] || "#999") + '"></i>' + esc(STATUS_LABEL[s.key] || s.key) + '</span><div class="bar"><span style="width:' + (s.count / total) * 100 + "%;background:" + (STATUS_COLOR[s.key] || "#999") + '"></span></div><b style="text-align:right">' + s.count + "</b></div>";
+          }).join("") : '<p class="muted">No data yet.</p>') + "</div>" +
+      '<div class="card"><div class="card-title"><h2>By waste category</h2></div>' + (d.category_breakdown.length ? d.category_breakdown.slice().sort(function (a, b) { return b.count - a.count; }).map(function (c) {
+        return '<div class="bar-row"><span class="clip">' + esc(c.category_name) + '</span><div class="bar"><span style="width:' + (c.count / maxCat) * 100 + '%"></span></div><b style="text-align:right">' + c.count + "</b></div>";
+      }).join("") : '<p class="muted">No data yet.</p>') + "</div></div>" +
+      '<div class="card"><div class="card-title"><h2 class="row">' + icon("flame", 20) + " Complaint hotspots</h2></div>" + (hs.status === "rejected" ? notice("err", esc(hs.reason.message))
+        : !hs.value.hotspots.length ? empty("chart", "No hotspots yet", "Hotspots appear once complaints with locations come in.")
+          : '<div class="table-wrap"><table class="t"><thead><tr><th>#</th><th>Locality</th><th>Top category</th><th>Complaints</th><th></th></tr></thead><tbody>' + hs.value.hotspots.map(function (h, i) {
+            return '<tr><td class="faint">' + (i + 1) + "</td><td><b>" + esc(h.locality || "Unknown") + '</b></td><td><span class="tag">' + esc(h.top_category) + "</span></td><td><b>" + h.complaint_count + '</b></td><td><a class="row sm" href="' + mapsLink(h.latitude, h.longitude) + '" target="_blank" rel="noreferrer">' + icon("pin", 14) + " Map</a></td></tr>";
+          }).join("") + "</tbody></table></div>") + "</div>";
+  }
+
+  /* ============================ ROUTER ============================ */
+  var routing = 0;
+  async function route() {
+    var my = ++routing;
+    var h = location.hash || "#/";
+    markNav(); reset();
+    view.innerHTML = spinner;
+    window.scrollTo(0, 0);
+    var m;
+    try {
+      if ((m = h.match(/^#\/complaint\/(.+)$/))) await pageDetail(decodeURIComponent(m[1]));
+      else if (h.indexOf("#/waste-guide") === 0) await pageWaste();
+      else if (h.indexOf("#/facilities") === 0) await pageFacilities();
+      else if (h.indexOf("#/report") === 0) await pageReport();
+      else if (h.indexOf("#/mine") === 0) await pageList("mine");
+      else if (h.indexOf("#/manage") === 0) await pageList("all");
+      else if (h.indexOf("#/analytics") === 0) await pageAnalytics();
+      else await pageDashboard();
+    } catch (e) {
+      if (my !== routing) return;
+      view.innerHTML = pageHead("Something went wrong") + notice("err", esc((e && e.message) || String(e))) +
+        '<p style="margin-top:16px"><a class="btn ghost" href="#/">Back to dashboard</a></p>';
+    }
+  }
+
+  /* ============================ BOOT ============================ */
+  async function boot() {
+    buildShell();
+    renderSync();
+    try {
+      if (!token && CONFIG.DEMO_EMAIL && CONFIG.DEMO_PASSWORD) {
+        var t = await api("/auth/login", { method: "POST", auth: false, form: new URLSearchParams({ username: CONFIG.DEMO_EMAIL, password: CONFIG.DEMO_PASSWORD }) });
+        token = t.access_token; store.set("cleanloop.token", token);
+      }
+      if (token) me = await api("/auth/me");
+    } catch (e) { token = null; me = null; store.del("cleanloop.token"); }
+    renderUser();
+    window.addEventListener("hashchange", route);
+    window.addEventListener("online", function () { renderSync(); flush(true); });
+    window.addEventListener("offline", renderSync);
+    if (navigator.onLine && token) flush(true);
+    route();
+  }
+  boot().catch(function (e) {
+    document.getElementById("app").innerHTML = '<div style="padding:32px;font-family:system-ui"><h2>Clean Loop failed to start</h2><pre style="white-space:pre-wrap">' + esc(e && e.message || e) + "</pre></div>";
+  });
+})();
+
+    </script>
   </body>
 </html>
